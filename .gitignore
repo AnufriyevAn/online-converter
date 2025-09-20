@@ -1,0 +1,17 @@
+﻿# Node
+node_modules/
+npm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+
+# Builds
+frontend/dist/
+*.log
+
+# Backend data
+backend/data/
+!backend/data/.gitkeep
+
+# Env files
+backend/.env
+frontend/.env

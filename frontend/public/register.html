@@ -1,0 +1,67 @@
+﻿<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Регистрация</title>
+  <style>
+    body{margin:0;font-family:system-ui,Segoe UI,Inter,Roboto,sans-serif;background:#0b1220;color:#e5e7eb;display:grid;place-items:center;height:100vh}
+    .card{width:min(420px,92vw);background:#0f172a;border:1px solid #334155;border-radius:14px;padding:18px}
+    h2{margin:0 0 12px 0}
+    input{width:100%;margin:6px 0 10px;background:#0b1220;color:#e5e7eb;border:1px solid #334155;border-radius:10px;padding:10px}
+    button{width:100%;background:#3b82f6;border:none;color:white;border-radius:10px;padding:10px;cursor:pointer}
+    .muted{color:#9ca3af}
+    .err{color:#fecaca;margin:10px 0 0}
+    .row{display:flex;gap:8px;margin-top:8px}
+    .alt{background:#10b981}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Регистрация</h2>
+    <input id="email" placeholder="email" autocomplete="username" />
+    <input id="pass"  placeholder="пароль" type="password" autocomplete="new-password" />
+    <button id="go">Зарегистрироваться</button>
+    <div class="err" id="err"></div>
+    <div class="row" id="actions" style="display:none">
+      <button class="alt" id="toLogin">Войти</button>
+    </div>
+    <p class="muted" style="margin-top:10px">После успешной регистрации окно закроется автоматически.</p>
+  </div>
+  <script>
+    const $ = s => document.querySelector(s);
+    $("#go").onclick = async () => {
+      const email = $("#email").value.trim();
+      const password = $("#pass").value;
+      $("#err").textContent = ""; $("#actions").style.display = "none";
+      try{
+        const r = await fetch("/api/auth/register", {
+          method:"POST", headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const j = await r.json();
+        if(!r.ok) throw new Error(j.error || r.statusText);
+        window.opener?.postMessage({ type:"auth", token:j.token, user:j.user }, window.location.origin);
+        window.close();
+      }catch(e){
+        const msg = (e.message||"Ошибка регистрации");
+        if (msg.toLowerCase().includes("email exists")) {
+          $("#err").textContent = "Такой e-mail уже зарегистрирован. Войдите в аккаунт.";
+          $("#actions").style.display = "flex";
+          $("#toLogin").onclick = () => {
+            window.opener?.postMessage({ type:"open-login" }, window.location.origin);
+            window.close();
+          };
+        } else {
+          $("#err").textContent = msg;
+        }
+      }
+    };
+    // на случай, если окно открыто напрямую — позволим открыть вход
+    $("#toLogin")?.addEventListener("click", ()=>{
+      window.opener?.postMessage({ type:"open-login" }, window.location.origin);
+      window.close();
+    });
+  </script>
+</body>
+</html>

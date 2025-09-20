@@ -1,0 +1,81 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Авторизация</title>
+</head>
+<body>
+  <h1>Авторизация</h1>
+
+  <section>
+    <h2>Регистрация</h2>
+    <form id="regForm">
+      <input type="email" id="regEmail" placeholder="Email" required />
+      <input type="password" id="regPass" placeholder="Пароль (мин. 6)" required />
+      <button type="submit">Зарегистрироваться</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Вход</h2>
+    <form id="loginForm">
+      <input type="email" id="logEmail" placeholder="Email" required />
+      <input type="password" id="logPass" placeholder="Пароль" required />
+      <button type="submit">Войти</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Мой профиль</h2>
+    <button id="meBtn">Показать /me</button>
+    <button id="logoutBtn">Выйти</button>
+    <button id="deleteBtn">Удалить аккаунт</button>
+    <pre id="out"></pre>
+  </section>
+
+  <script>
+    const out = document.getElementById("out");
+
+    function setToken(t){ localStorage.setItem("token", t); }
+    function getToken(){ return localStorage.getItem("token"); }
+    function authHeader(){ const t=getToken(); return t? { "Authorization":"Bearer " + t } : {}; }
+
+    document.getElementById("regForm").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const email = document.getElementById("regEmail").value;
+      const password = document.getElementById("regPass").value;
+      const res = await fetch("/auth/register", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({email, password}) });
+      const data = await res.json();
+      out.textContent = JSON.stringify(data, null, 2);
+      if (data.token) setToken(data.token);
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const email = document.getElementById("logEmail").value;
+      const password = document.getElementById("logPass").value;
+      const res = await fetch("/auth/login", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({email, password}) });
+      const data = await res.json();
+      out.textContent = JSON.stringify(data, null, 2);
+      if (data.token) setToken(data.token);
+    });
+
+    document.getElementById("meBtn").addEventListener("click", async ()=>{
+      const res = await fetch("/me", { headers: authHeader() });
+      out.textContent = JSON.stringify(await res.json(), null, 2);
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", ()=>{
+      localStorage.removeItem("token");
+      out.textContent = "Вы вышли";
+    });
+
+    document.getElementById("deleteBtn").addEventListener("click", async ()=>{
+      if (!confirm("Удалить аккаунт? Это действие необратимо.")) return;
+      const res = await fetch("/me", { method:"DELETE", headers: authHeader() });
+      out.textContent = JSON.stringify(await res.json(), null, 2);
+      localStorage.removeItem("token");
+    });
+  </script>
+</body>
+</html>
