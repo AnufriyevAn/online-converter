@@ -8,10 +8,10 @@ pnpm-lock.yaml
 frontend/dist/
 *.log
 
-# Backend data
+# Backend data (локальная БД)
 backend/data/
 !backend/data/.gitkeep
 
-# Env files
+# Env
 backend/.env
 frontend/.env
